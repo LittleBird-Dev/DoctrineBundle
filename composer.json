@@ -1,5 +1,5 @@
 {
-    "name": "doctrine/doctrine-bundle",
+    "name": "littlebird/doctrine/doctrine-bundle",
     "type": "symfony-bundle",
     "description": "Symfony DoctrineBundle",
     "keywords": ["DBAL", "ORM", "Database", "Persistence"],
@@ -29,6 +29,9 @@
         "doctrine/orm": ">=2.2,<2.4-dev",
         "symfony/yaml": "2.1.*",
         "symfony/validator": "2.1.*"
+    },
+    "replace": {
+        "doctrine/DoctrineBundle": "self.version"
     },
     "suggest": {
         "doctrine/orm": "The Doctrine ORM integration is optional in the bundle."

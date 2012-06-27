@@ -278,6 +278,7 @@ class DoctrineExtension extends AbstractDoctrineExtension
             'setAutoGenerateProxyClasses' => '%doctrine.orm.auto_generate_proxy_classes%',
             'setClassMetadataFactoryName' => $entityManager['class_metadata_factory_name'],
             'setDefaultRepositoryClassName' => $entityManager['default_repository_class'],
+            'setProxyFactoryClassName'    => $entityManager['proxy_factory_class_name']
         );
         foreach ($methods as $method => $arg) {
             $ormConfigDef->addMethodCall($method, array($arg));
