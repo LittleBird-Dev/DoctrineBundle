@@ -31,7 +31,7 @@
         "symfony/validator": "2.1.*"
     },
     "replace": {
-        "doctrine/DoctrineBundle": "self.version"
+        "doctrine/doctrine-bundle": "self.version"
     },
     "suggest": {
         "doctrine/orm": "The Doctrine ORM integration is optional in the bundle."
