@@ -278,6 +278,7 @@ class Configuration implements ConfigurationInterface
                     ->scalarNode('connection')->end()
                     ->scalarNode('class_metadata_factory_name')->defaultValue('Doctrine\ORM\Mapping\ClassMetadataFactory')->end()
                     ->scalarNode('proxy_factory_class_name')->defaultValue('Doctrine\ORM\Proxy\ProxyFactory')->end()
+                    ->scalarNode('unit_of_work_class_name')->defaultValue('Doctrine\ORM\UnitOfWork')->end()
                     ->scalarNode('default_repository_class')->defaultValue('Doctrine\ORM\EntityRepository')->end()
                     ->scalarNode('naming_strategy')->defaultValue('Doctrine\ORM\Mapping\DefaultNamingStrategy')->end()
                     ->scalarNode('auto_mapping')->defaultFalse()->end()
