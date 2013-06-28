@@ -11,12 +11,13 @@
             <connection name="default" dbname="db" />
         </dbal>
 
-        <orm>
-            <filter name="soft_delete" enabled="true" >Doctrine\Bundle\DoctrineBundle\Tests\DependencyInjection\TestFilter</filter>
-            <filter name="myFilter" enabled="true" class="Doctrine\Bundle\DoctrineBundle\Tests\DependencyInjection\TestFilter">
-                <parameter name="myParameter">myValue</parameter>
-                <parameter name="mySecondParameter">mySecondValue</parameter>
-            </filter>
+        <orm default-entity-manager="em1">
+            <entity-manager name="em1" naming-strategy="doctrine.orm.naming_strategy.default">
+                <mapping name="YamlBundle" />
+            </entity-manager>
+            <entity-manager name="em2" naming-strategy="doctrine.orm.naming_strategy.underscore">
+                <mapping name="YamlBundle" />
+            </entity-manager>
         </orm>
     </config>
 </srv:container>

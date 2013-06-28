@@ -27,9 +27,11 @@ Configuration Reference
                         memory:               true
                         unix_socket:          /tmp/mysql.sock
                         wrapper_class:        MyDoctrineDbalConnectionWrapper
+                        keep_slave:           true
                         charset:              UTF8
                         logging:              %kernel.debug%
                         platform_service:     MyOwnDatabasePlatformService
+                        schema_filter:        ^sf2_
                         mapping_types:
                             enum: string
                     conn1:
@@ -64,6 +66,7 @@ Configuration Reference
                                 test_numeric: Acme\HelloBundle\DQL\NumericFunction
                             datetime_functions:
                                 test_datetime: Acme\HelloBundle\DQL\DatetimeFunction
+                        naming_strategy:    doctrine.orm.naming_strategy.default # Service Reference
                     em2:
                         # ...
 
@@ -90,9 +93,11 @@ Configuration Reference
                         memory="true"
                         unix-socket="/tmp/mysql.sock"
                         wrapper-class="MyDoctrineDbalConnectionWrapper"
+                        keep-slave="true"
                         charset="UTF8"
                         logging="%kernel.debug%"
                         platform-service="MyOwnDatabasePlatformService"
+                        schema-filter="^sf2_"
                     >
                         <doctrine:option key="foo">bar</doctrine:option>
                         <doctrine:mapping-type name="enum">string</doctrine:mapping-type>
@@ -102,7 +107,7 @@ Configuration Reference
                 </doctrine:dbal>
 
                 <doctrine:orm default-entity-manager="default" auto-generate-proxy-classes="false" proxy-namespace="Proxies" proxy-dir="%kernel.cache_dir%/doctrine/orm/Proxies">
-                    <doctrine:entity-manager name="default" query-cache-driver="array" result-cache-driver="array" connection="conn1" class-metadata-factory-name="Doctrine\ORM\Mapping\ClassMetadataFactory">
+                    <doctrine:entity-manager name="default" query-cache-driver="array" result-cache-driver="array" connection="conn1" class-metadata-factory-name="Doctrine\ORM\Mapping\ClassMetadataFactory" naming-strategy="doctrine.orm.naming_strategy.default">
                         <doctrine:metadata-cache-driver type="memcache" host="localhost" port="11211" instance-class="Memcache" class="Doctrine\Common\Cache\MemcacheCache" />
                         <doctrine:mapping name="AcmeHelloBundle" />
                         <doctrine:dql>
@@ -150,7 +155,7 @@ certain classes, but those are for very advanced use-cases only.
 Caching Drivers
 ~~~~~~~~~~~~~~~
 
-For the caching drivers you can specify the values "array", "apc", "memcache"
+For the caching drivers you can specify the values "array", "apc", "memcache", "memcached"
 or "xcache".
 
 The following example shows an overview of the caching configurations:
@@ -205,6 +210,31 @@ can control. The following configuration options exist for a mapping:
     single: Configuration; Doctrine DBAL
     single: Doctrine; DBAL configuration
 
+Filters Configuration
+~~~~~~~~~~~~~~~~~~~~~
+
+You can easily define `doctrine filters`_ in your configuration file:
+
+.. code-block:: yaml
+
+    doctrine:
+        orm:
+            filters:
+                myFilter:
+                    class: MyVendor\MyBundle\Filters\MyFilter
+                    enabled: true
+                    parameters:
+                        myParameter: myValue
+                        mySecondParameter: mySecondValue
+
+* ``myFilter:``   Filter identifier (Required)
+* ``class:``      Filter target class (Required)
+* ``enabled:``    Enable/Disable the filter by default (Optional - Default disabled)
+* ``parameters:`` Set default parameters (Optional)
+* ``myParameter: myValue`` Bind the value ``myValue`` to the parameter ``myParameter`` (Optional)
+
+.. _doctrine filters: http://docs.doctrine-project.org/projects/doctrine-orm/en/latest/reference/filters.html
+
 .. _`reference-dbal-configuration`:
 
 Doctrine DBAL Configuration
@@ -241,6 +271,7 @@ can configure. The following block shows all possible configuration keys:
                 charset:              UTF8
                 logging:              %kernel.debug%
                 platform_service:     MyOwnDatabasePlatformService
+                schema_filter:        ^sf2_
                 mapping_types:
                     enum: string
                 types:
@@ -268,6 +299,7 @@ can configure. The following block shows all possible configuration keys:
                 charset="UTF8"
                 logging="%kernel.debug%"
                 platform-service="MyOwnDatabasePlatformService"
+                schema-filter="^sf2_"
             >
                 <doctrine:option key="foo">bar</doctrine:option>
                 <doctrine:mapping-type name="enum">string</doctrine:mapping-type>

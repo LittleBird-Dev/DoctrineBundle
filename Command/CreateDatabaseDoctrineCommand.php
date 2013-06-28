@@ -27,6 +27,9 @@ use Doctrine\DBAL\DriverManager;
  */
 class CreateDatabaseDoctrineCommand extends DoctrineCommand
 {
+    /**
+     * {@inheritDoc}
+     */
     protected function configure()
     {
         $this
@@ -47,13 +50,22 @@ EOT
         );
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $connection = $this->getDoctrineConnection($input->getOption('connection'));
 
         $params = $connection->getParams();
-        $name = isset($params['path']) ? $params['path'] : $params['dbname'];
+        if (isset($params['master'])) {
+            $params = $params['master'];
+        }
 
+        $name = isset($params['path']) ? $params['path'] : (isset($params['dbname']) ? $params['dbname'] : false);
+        if (!$name) {
+            throw new \InvalidArgumentException("Connection does not contain a 'path' or 'dbname' parameter and cannot be dropped.");
+        }
         unset($params['dbname']);
 
         $tmpConnection = DriverManager::getConnection($params);
@@ -63,14 +75,18 @@ EOT
             $name = $tmpConnection->getDatabasePlatform()->quoteSingleIdentifier($name);
         }
 
+        $error = false;
         try {
             $tmpConnection->getSchemaManager()->createDatabase($name);
             $output->writeln(sprintf('<info>Created database for connection named <comment>%s</comment></info>', $name));
         } catch (\Exception $e) {
             $output->writeln(sprintf('<error>Could not create database for connection named <comment>%s</comment></error>', $name));
             $output->writeln(sprintf('<error>%s</error>', $e->getMessage()));
+            $error = true;
         }
 
         $tmpConnection->close();
+
+        return $error ? 1 : 0;
     }
 }
