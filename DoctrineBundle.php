@@ -36,6 +36,9 @@ class DoctrineBundle extends Bundle
 {
     private $autoloader;
 
+    /**
+     * {@inheritDoc}
+     */
     public function build(ContainerBuilder $container)
     {
         parent::build($container);
@@ -48,6 +51,9 @@ class DoctrineBundle extends Bundle
         $container->addCompilerPass(new DoctrineValidationPass('orm'));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function boot()
     {
         // Register an autoloader for proxies to avoid issues when unserializing them
@@ -64,11 +70,13 @@ class DoctrineBundle extends Bundle
                     $fileName = str_replace('\\', '', substr($class, strlen($namespace) +1));
                     $file = $dir.DIRECTORY_SEPARATOR.$fileName.'.php';
 
-                    if (!is_file($file) && $container->getParameter('kernel.debug')) {
+                    if (!is_file($file) && $container->getParameter('doctrine.orm.auto_generate_proxy_classes')) {
                         $originalClassName = ClassUtils::getRealClass($class);
+                        /** @var $registry Registry */
                         $registry = $container->get('doctrine');
 
                         // Tries to auto-generate the proxy file
+                        /** @var $em \Doctrine\ORM\EntityManager */
                         foreach ($registry->getManagers() as $em) {
 
                             if ($em->getConfiguration()->getAutoGenerateProxyClasses()) {
@@ -82,7 +90,7 @@ class DoctrineBundle extends Bundle
                             }
                         }
 
-                        clearstatcache($file);
+                        clearstatcache(true, $file);
                     }
 
                     if (file_exists($file)) {
@@ -94,6 +102,9 @@ class DoctrineBundle extends Bundle
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function shutdown()
     {
         if (null !== $this->autoloader) {
@@ -102,6 +113,9 @@ class DoctrineBundle extends Bundle
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function registerCommands(Application $application)
     {
         // Use the default logic when the ORM is available.

@@ -29,6 +29,9 @@ use Doctrine\Bundle\DoctrineBundle\Mapping\DisconnectedMetadataFactory;
  */
 class GenerateEntitiesDoctrineCommand extends DoctrineCommand
 {
+    /**
+     * {@inheritDoc}
+     */
     protected function configure()
     {
         $this
@@ -79,6 +82,9 @@ EOT
         );
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $manager = new DisconnectedMetadataFactory($this->getContainer()->get('doctrine'));
@@ -92,7 +98,7 @@ EOT
             $name = strtr($input->getArgument('name'), '/', '\\');
 
             if (false !== $pos = strpos($name, ':')) {
-                $name = $this->getContainer()->get('doctrine')->getEntityNamespace(substr($name, 0, $pos)).'\\'.substr($name, $pos + 1);
+                $name = $this->getContainer()->get('doctrine')->getAliasNamespace(substr($name, 0, $pos)).'\\'.substr($name, $pos + 1);
             }
 
             if (class_exists($name)) {

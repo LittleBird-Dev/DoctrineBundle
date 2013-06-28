@@ -44,6 +44,7 @@ class ConnectionFactory
      * @param array         $params
      * @param Configuration $config
      * @param EventManager  $eventManager
+     * @param array         $mappingTypes
      *
      * @return \Doctrine\DBAL\Connection
      */
@@ -69,6 +70,9 @@ class ConnectionFactory
         return $connection;
     }
 
+    /**
+     * initialize the types
+     */
     private function initializeTypes()
     {
         foreach ($this->typesConfig as $type => $typeConfig) {

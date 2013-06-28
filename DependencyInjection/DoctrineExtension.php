@@ -32,6 +32,12 @@ use Symfony\Component\Config\FileLocator;
  */
 class DoctrineExtension extends AbstractDoctrineExtension
 {
+    private $defaultConnection;
+    private $entityManagers;
+
+    /**
+     * {@inheritDoc}
+     */
     public function load(array $configs, ContainerBuilder $container)
     {
         $configuration = $this->getConfiguration($configs, $container);
@@ -117,6 +123,12 @@ class DoctrineExtension extends AbstractDoctrineExtension
         }
         unset($connection['profiling']);
 
+        if (isset($connection['schema_filter']) && $connection['schema_filter']) {
+            $configuration->addMethodCall('setFilterSchemaAssetsExpression', array($connection['schema_filter']));
+        }
+
+        unset($connection['schema_filter']);
+
         if ($logger) {
             $configuration->addMethodCall('setSQLLogger', array($logger));
         }
@@ -125,7 +137,8 @@ class DoctrineExtension extends AbstractDoctrineExtension
         $def = $container->setDefinition(sprintf('doctrine.dbal.%s_connection.event_manager', $name), new DefinitionDecorator('doctrine.dbal.connection.event_manager'));
 
         // connection
-        if (isset($connection['charset'])) {
+        // PDO ignores the charset property before 5.3.6 so the init listener has to be used instead.
+        if (isset($connection['charset']) && version_compare(PHP_VERSION, '5.3.6', '<')) {
             if ((isset($connection['driver']) && stripos($connection['driver'], 'mysql') !== false) ||
                  (isset($connection['driver_class']) && stripos($connection['driver_class'], 'mysql') !== false)) {
                 $mysqlSessionInit = new Definition('%doctrine.dbal.events.mysql_session_init.class%');
@@ -165,9 +178,10 @@ class DoctrineExtension extends AbstractDoctrineExtension
         unset($options['mapping_types']);
 
         foreach (array(
-            'options' => 'driverOptions',
-            'driver_class' => 'driverClass',
+            'options'       => 'driverOptions',
+            'driver_class'  => 'driverClass',
             'wrapper_class' => 'wrapperClass',
+            'keep_slave'    => 'keepSlave',
         ) as $old => $new) {
             if (isset($options[$old])) {
                 $options[$new] = $options[$old];
@@ -177,7 +191,8 @@ class DoctrineExtension extends AbstractDoctrineExtension
 
         if (!empty($options['slaves'])) {
             $nonRewrittenKeys = array(
-                'driver' => true, 'driverOptions' => true, 'driverClass' => true, 'wrapperClass' => true,
+                'driver' => true, 'driverOptions' => true, 'driverClass' => true,
+                'wrapperClass' => true, 'keepSlave' => true,
                 'platform' => true, 'slaves' => true, 'master' => true,
                 // included by safety but should have been unset already
                 'logging' => true, 'profiling' => true, 'mapping_types' => true, 'platform_service' => true,
@@ -254,8 +269,8 @@ class DoctrineExtension extends AbstractDoctrineExtension
     /**
      * Loads a configured ORM entity manager.
      *
-     * @param array $entityManager A configured ORM entity manager.
-     * @param ContainerBuilder $container A ContainerBuilder instance
+     * @param array            $entityManager A configured ORM entity manager.
+     * @param ContainerBuilder $container     A ContainerBuilder instance
      */
     protected function loadOrmEntityManager(array $entityManager, ContainerBuilder $container)
     {
@@ -282,6 +297,15 @@ class DoctrineExtension extends AbstractDoctrineExtension
             'setNamingStrategyClass'      => $entityManager['naming_strategy'],
             'setUnitOfWorkClassName'      => $entityManager['unit_of_work_class_name']
         );
+        // check for version to keep BC
+        if (version_compare(\Doctrine\ORM\Version::VERSION, "2.3.0-DEV") >= 0) {
+            $methods = array_merge($methods, array(
+                'setNamingStrategy'       => new Reference($entityManager['naming_strategy']),
+            ));
+        }
+        if ($entityManager['entity_listener_resolver']) {
+            $methods['setEntityListenerResolver'] = new Reference($entityManager['entity_listener_resolver']);
+        }
         foreach ($methods as $method => $arg) {
             $ormConfigDef->addMethodCall($method, array($arg));
         }
@@ -303,10 +327,14 @@ class DoctrineExtension extends AbstractDoctrineExtension
         }
 
         $enabledFilters = array();
+        $filtersParameters = array();
         foreach ($entityManager['filters'] as $name => $filter) {
             $ormConfigDef->addMethodCall('addFilter', array($name, $filter['class']));
             if ($filter['enabled']) {
                 $enabledFilters[] = $name;
+            }
+            if ($filter['parameters']) {
+                $filtersParameters[$name] = $filter['parameters'];
             }
         }
 
@@ -314,6 +342,7 @@ class DoctrineExtension extends AbstractDoctrineExtension
         $managerConfiguratorDef = $container
             ->setDefinition($managerConfiguratorName, new DefinitionDecorator('doctrine.orm.manager_configurator.abstract'))
             ->replaceArgument(0, $enabledFilters)
+            ->replaceArgument(1, $filtersParameters)
         ;
 
         if (!isset($entityManager['connection'])) {
@@ -380,6 +409,9 @@ class DoctrineExtension extends AbstractDoctrineExtension
         $ormConfigDef->addMethodCall('setEntityNamespaces', array($this->aliasMap));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function getObjectManagerElementName($name)
     {
         return 'doctrine.orm.'.$name;
@@ -390,11 +422,17 @@ class DoctrineExtension extends AbstractDoctrineExtension
         return 'Entity';
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function getMappingResourceConfigDirectory()
     {
         return 'Resources/config/doctrine';
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function getMappingResourceExtension()
     {
         return 'orm';
@@ -414,9 +452,7 @@ class DoctrineExtension extends AbstractDoctrineExtension
     }
 
     /**
-     * Returns the base path for the XSD files.
-     *
-     * @return string The XSD base path
+     * {@inheritDoc}
      */
     public function getXsdValidationBasePath()
     {
@@ -424,15 +460,16 @@ class DoctrineExtension extends AbstractDoctrineExtension
     }
 
     /**
-     * Returns the namespace to be used for this extension (XML namespace).
-     *
-     * @return string The XML namespace
+     * {@inheritDoc}
      */
     public function getNamespace()
     {
         return 'http://symfony.com/schema/dic/doctrine';
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function getConfiguration(array $config, ContainerBuilder $container)
     {
         return new Configuration($container->getParameter('kernel.debug'));
