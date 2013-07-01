@@ -294,15 +294,9 @@ class DoctrineExtension extends AbstractDoctrineExtension
             'setClassMetadataFactoryName' => $entityManager['class_metadata_factory_name'],
             'setDefaultRepositoryClassName' => $entityManager['default_repository_class'],
             'setProxyFactoryClassName'    => $entityManager['proxy_factory_class_name'],
-            'setNamingStrategyClass'      => $entityManager['naming_strategy_class_name'],
+            'setNamingStrategyClass'      => $entityManager['naming_strategy'],
             'setUnitOfWorkClassName'      => $entityManager['unit_of_work_class_name']
         );
-        // check for version to keep BC
-        if (version_compare(\Doctrine\ORM\Version::VERSION, "2.3.0-DEV") >= 0) {
-            $methods = array_merge($methods, array(
-                'setNamingStrategy'       => new Reference($entityManager['naming_strategy']),
-            ));
-        }
         if ($entityManager['entity_listener_resolver']) {
             $methods['setEntityListenerResolver'] = new Reference($entityManager['entity_listener_resolver']);
         }
