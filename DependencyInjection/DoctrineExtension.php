@@ -347,7 +347,7 @@ class DoctrineExtension extends AbstractDoctrineExtension
             'setClassMetadataFactoryName' => $entityManager['class_metadata_factory_name'],
             'setDefaultRepositoryClassName' => $entityManager['default_repository_class'],
             'setProxyFactoryClassName'    => $entityManager['proxy_factory_class_name'],
-            'setNamingStrategyClass'      => $entityManager['naming_strategy'],
+            'setNamingStrategy'           => $entityManager['naming_strategy'],
             'setUnitOfWorkClassName'      => $entityManager['unit_of_work_class_name']
         );
         // check for version to keep BC
